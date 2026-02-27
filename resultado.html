@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seu Resultado — SPP Carreira</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --amber:#E8870A;--amber-h:#C97208;--amber-light:#FFF3E0;
+  --ink:#0D0C0B;--ink2:#1A1917;--ink3:#2A2826;
+  --cream:#F9F8F4;--off:#F2F1EC;--white:#FFFFFF;
+  --muted:#8C8A82;--border:#E6E4DC;
+  --green:#176334;--green-bg:#EBF5EF;
+  --f:'Plus Jakarta Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--f);background:var(--ink);color:#fff;overflow-x:hidden;}
+
+/* LOADING */
+#loading{
+  position:fixed;inset:0;background:var(--ink);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+.load-ring{
+  width:56px;height:56px;border-radius:50%;
+  border:3px solid rgba(232,135,10,0.15);border-top-color:var(--amber);
+  animation:spin 0.9s linear infinite;
+}
+.load-text{font-size:15px;color:rgba(255,255,255,0.4);font-weight:500;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* NAV */
+nav{
+  padding:0 40px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  background:rgba(13,12,11,0.9);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:50;
+}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.lm{width:30px;height:30px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;}
+.lt{font-size:13px;font-weight:800;color:#fff;}.lt span{color:var(--amber);}
+.nav-back{font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.2s;font-weight:500;}
+.nav-back:hover{color:rgba(255,255,255,0.7);}
+
+/* HERO RESULT */
+.result-hero{
+  padding:72px 24px 56px;text-align:center;
+  background:linear-gradient(180deg,rgba(232,135,10,0.05) 0%,transparent 100%);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  position:relative;overflow:hidden;
+}
+.result-hero::before{
+  content:'';position:absolute;
+  width:600px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(232,135,10,0.06),transparent 70%);
+  top:-100px;left:50%;transform:translateX(-50%);pointer-events:none;
+}
+.result-badge{
+  display:inline-block;background:rgba(232,135,10,0.1);
+  border:1px solid rgba(232,135,10,0.22);color:var(--amber);
+  font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  padding:6px 16px;border-radius:100px;margin-bottom:20px;
+}
+.result-name{font-size:clamp(28px,5vw,56px);font-weight:800;color:#fff;line-height:1.05;letter-spacing:-1.5px;margin-bottom:8px;}
+.result-name em{font-style:italic;color:var(--amber);font-weight:300;}
+.result-archetype-label{font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:32px;}
+.result-archetype{
+  display:inline-block;font-size:clamp(20px,4vw,36px);font-weight:800;
+  color:#fff;letter-spacing:-0.5px;margin-bottom:8px;
+}
+.archetype-phrase{font-size:15px;color:rgba(255,255,255,0.5);font-style:italic;margin-bottom:36px;}
+
+/* SCORE */
+.score-wrap{max-width:480px;margin:0 auto 48px;}
+.score-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.score-label{font-size:12px;color:rgba(255,255,255,0.4);font-weight:600;letter-spacing:0.5px;}
+.score-num{font-size:28px;font-weight:800;color:var(--amber);}
+.score-track{height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
+.score-fill{height:100%;background:linear-gradient(90deg,var(--amber),#FFB347);border-radius:4px;transition:width 1.5s cubic-bezier(0.4,0,0.2,1);width:0;}
+
+/* ANALYSIS GRID */
+.analysis{padding:64px 24px;background:var(--ink2);}
+.a-inner{max-width:960px;margin:0 auto;}
+.a-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px;}
+.a-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:28px;}
+.a-card-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.a-item{font-size:14px;color:rgba(255,255,255,0.65);line-height:1.65;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
+.a-item:last-child{margin-bottom:0;}
+.a-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+
+/* SKILLS */
+.skills-section{padding:64px 24px;background:var(--ink);}
+.sk-inner{max-width:760px;margin:0 auto;}
+.sk-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:14px;}
+.sk-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;}
+.sk-tag{
+  background:rgba(232,135,10,0.1);border:1px solid rgba(232,135,10,0.2);
+  color:var(--amber);font-size:12px;font-weight:700;
+  padding:6px 14px;border-radius:100px;
+}
+.sk-soft{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.8;}
+.sk-soft strong{color:rgba(255,255,255,0.8);}
+
+/* TRANSITION */
+.transition-block{
+  padding:56px 24px;background:var(--ink2);
+  border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);
+  text-align:center;
+}
+.tb-inner{max-width:640px;margin:0 auto;}
+.tb-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:14px;}
+.tb-title{font-size:clamp(22px,4vw,36px);font-weight:800;color:#fff;line-height:1.15;letter-spacing:-0.5px;margin-bottom:12px;}
+.tb-sub{font-size:15px;color:rgba(255,255,255,0.4);line-height:1.75;margin-bottom:0;}
+
+/* CV PREVIEW */
+.cv-preview{padding:64px 24px;background:var(--ink);}
+.cv-inner{max-width:760px;margin:0 auto;}
+.cv-device{
+  background:#fff;border-radius:16px;overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.05);
+}
+.cv-bar{
+  background:#F2F1EC;border-bottom:1px solid #E6E4DC;
+  padding:11px 18px;display:flex;align-items:center;gap:7px;
+}
+.cv-dot{width:10px;height:10px;border-radius:50%;}
+.cv-fn{margin-left:10px;font-size:12px;color:#8C8A82;font-family:var(--f);}
+.cv-body{padding:36px 44px;font-family:var(--f);}
+.cv-name{font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;}
+.cv-role{font-size:13px;font-weight:700;color:var(--amber-h);margin:5px 0 12px;}
+.cv-contact{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
+.cv-ci{font-size:11px;color:var(--muted);}
+.cv-line{height:2px;background:var(--amber);border-radius:1px;margin-bottom:18px;}
+.cv-st{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--amber-h);margin-bottom:9px;}
+.cv-summary{font-size:13px;color:var(--ink3);line-height:1.8;margin-bottom:22px;}
+.cv-blur-wrap{position:relative;}
+.cv-blur{filter:blur(5px);user-select:none;pointer-events:none;}
+.cv-bl{height:10px;background:#E6E4DC;border-radius:4px;margin-bottom:8px;}
+.cv-lock{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.8) 28%,rgba(255,255,255,0.98));
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:28px;gap:5px;
+}
+.cv-li{font-size:20px;}
+.cv-lt{font-size:14px;font-weight:800;color:var(--ink);}
+.cv-ls{font-size:12px;color:var(--muted);text-align:center;max-width:220px;}
+
+/* PRICE BLOCK */
+.price-section{padding:64px 24px;background:var(--ink2);}
+.price-inner{max-width:580px;margin:0 auto;}
+.price-card{
+  background:rgba(232,135,10,0.07);border:1px solid rgba(232,135,10,0.18);
+  border-radius:20px;padding:36px;text-align:center;
+}
+.price-includes{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;text-align:left;
+}
+.pi-item{display:flex;align-items:center;gap:9px;font-size:13px;color:rgba(255,255,255,0.55);}
+.pi-check{color:var(--amber);font-weight:800;font-size:13px;}
+.price-from{font-size:13px;color:rgba(255,255,255,0.22);text-decoration:line-through;margin-bottom:4px;}
+.price-main{font-size:clamp(48px,8vw,72px);font-weight:800;color:var(--amber);line-height:1;margin-bottom:6px;}
+.price-main sup{font-size:22px;vertical-align:top;margin-top:12px;display:inline-block;}
+.price-note{font-size:12px;color:rgba(255,255,255,0.25);margin-bottom:26px;line-height:1.6;}
+.btn-buy{
+  display:block;width:100%;background:var(--amber);color:#fff;
+  font-family:var(--f);font-size:16px;font-weight:800;
+  padding:18px;border-radius:100px;border:none;cursor:pointer;
+  box-shadow:0 8px 32px rgba(232,135,10,0.32);transition:all 0.25s;
+}
+.btn-buy:hover{background:var(--amber-h);transform:translateY(-2px);box-shadow:0 16px 48px rgba(232,135,10,0.38);}
+.price-trust{font-size:12px;color:rgba(255,255,255,0.18);margin-top:14px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;}
+
+/* ADVANCED FLOW */
+.advanced-block{
+  background:linear-gradient(135deg,rgba(23,99,52,0.15),rgba(232,135,10,0.07));
+  border:1px solid rgba(23,99,52,0.22);border-radius:20px;padding:40px;
+  text-align:center;margin-top:32px;
+}
+.adv-badge{display:inline-block;background:var(--green-bg);color:var(--green);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:18px;}
+.adv-title{font-size:clamp(20px,3vw,28px);font-weight:800;color:#fff;margin-bottom:12px;letter-spacing:-0.3px;}
+.adv-text{font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;max-width:440px;margin:0 auto 24px;}
+.adv-form{display:flex;gap:9px;max-width:380px;margin:0 auto 14px;}
+.adv-input{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:11px;padding:13px 15px;font-family:var(--f);font-size:13px;color:#fff;outline:none;}
+.adv-input::placeholder{color:rgba(255,255,255,0.22);}
+.btn-adv{background:var(--green);color:#fff;font-family:var(--f);font-size:13px;font-weight:700;padding:13px 20px;border-radius:11px;border:none;cursor:pointer;white-space:nowrap;transition:background 0.2s;}
+.btn-adv:hover{background:#135228;}
+.adv-cv-link{font-size:12px;color:rgba(255,255,255,0.25);}
+.adv-cv-link a{color:rgba(232,135,10,0.55);cursor:pointer;text-decoration:underline;}
+
+@keyframes up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:760px){.a-grid{grid-template-columns:1fr;}.price-includes{grid-template-columns:1fr;}.cv-body{padding:24px 20px;}.adv-form{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="load-ring"></div>
+  <p class="load-text">Gerando sua análise...</p>
+</div>
+
+<div id="result-page" style="display:none;">
+
+<nav>
+  <a href="index.html" class="logo"><div class="lm">SPP</div><span class="lt">SPP <span>Carreira</span></span></a>
+  <a href="index.html" class="nav-back">← Voltar ao início</a>
+</nav>
+
+<div id="result-content"></div>
+
+</div>
+
+<script>
+// ── ARCHETYPES ──
+const ARCHETYPES = {
+  executor:{
+    name:'O Executor',
+    phrase:'"Você não espera — você faz acontecer."',
+    score:78,
+    color:'#E8870A'
+  },
+  estrategista:{
+    name:'O Estrategista',
+    phrase:'"Você vê o que os outros não veem antes de agir."',
+    score:82,
+    color:'#E8870A'
+  },
+  construtor:{
+    name:'O Construtor',
+    phrase:'"Você não segue caminhos — você abre."',
+    score:75,
+    color:'#E8870A'
+  },
+  conector:{
+    name:'O Conector',
+    phrase:'"Seu maior ativo é como você faz as pessoas se sentirem."',
+    score:80,
+    color:'#E8870A'
+  },
+  especialista:{
+    name:'O Especialista',
+    phrase:'"Você é a pessoa que chamam quando o problema é difícil."',
+    score:85,
+    color:'#E8870A'
+  },
+  adaptador:{
+    name:'O Adaptador',
+    phrase:'"Incerteza é onde você performa melhor."',
+    score:72,
+    color:'#E8870A'
+  },
+  protagonista:{
+    name:'O Protagonista',
+    phrase:'"Você não nasceu para ficar em segundo plano."',
+    score:77,
+    color:'#E8870A'
+  },
+  transformador:{
+    name:'O Transformador',
+    phrase:'"Você trabalha melhor quando acredita no que está fazendo."',
+    score:74,
+    color:'#E8870A'
+  },
+};
+
+// ── MODEL MAP ──
+const MODEL_MAP = {
+  'iniciante-universitario':'Modelo Universitário SPP',
+  'iniciante-recem-formado':'Modelo Recém-Formado SPP',
+  'iniciante-sem-faculdade':'Modelo Entrada de Mercado SPP',
+  'iniciante-outro-i':'Modelo Universitário SPP',
+  'intermediario-digital':'Modelo Migração Digital SPP',
+  'intermediario-tech':'Modelo Tech & Dados SPP',
+  'intermediario-adm':'Modelo Corporativo Pro SPP',
+  'intermediario-saude':'Modelo Saúde Profissional SPP',
+  'intermediario-outro-m':'Modelo Corporativo Pro SPP',
+};
+
+// ── ARCHETYPE ALGORITHM (deterministic) ──
+function computeArchetype(Q){
+  const scores = {executor:0,estrategista:0,construtor:0,conector:0,especialista:0,adaptador:0,protagonista:0,transformador:0};
+  // Etapa 3 — objetivo
+  const obj = Q.answers['3'];
+  if(obj==='reconhecido') {scores.executor+=2;scores.protagonista+=2;}
+  if(obj==='crescer') {scores.protagonista+=2;scores.executor+=1;scores.construtor+=1;}
+  if(obj==='proposito') {scores.transformador+=3;scores.conector+=1;}
+  if(obj==='liberdade') {scores.construtor+=3;scores.adaptador+=1;}
+  // Etapa 4 — como resolve
+  const res = Q.answers['4'];
+  if(res==='analise') {scores.estrategista+=3;scores.especialista+=2;}
+  if(res==='acao') {scores.executor+=3;scores.adaptador+=1;}
+  if(res==='colabo') {scores.conector+=3;scores.transformador+=1;}
+  if(res==='visao') {scores.estrategista+=2;scores.construtor+=2;}
+  // Etapa 5 — motivação
+  const mot = Q.answers['5'];
+  if(mot==='meta') {scores.executor+=2;scores.especialista+=1;}
+  if(mot==='criacao') {scores.construtor+=2;scores.protagonista+=1;}
+  if(mot==='desafio') {scores.especialista+=2;scores.executor+=1;}
+  if(mot==='crescimento') {scores.adaptador+=2;scores.transformador+=1;}
+  // Pick highest
+  return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+// ── SCORE CALCULATION ──
+function computeScore(archetypeKey, Q){
+  const base = ARCHETYPES[archetypeKey].score;
+  let bonus = 0;
+  if(Q.answers['7'] && Q.answers['7'].length>=2) bonus+=4;
+  if(Q.answers['8'] && Q.answers['8'].length>80) bonus+=3;
+  if(Q.level==='intermediario') bonus+=2;
+  return Math.min(base+bonus, 97);
+}
+
+// ── PROMPTS CONFIG (editable) ──
+const PROMPTS = {
+  perfil:(data)=>`Você é um especialista em desenvolvimento de carreira e posicionamento profissional.
+
+Com base no perfil abaixo, escreva um parágrafo de apresentação do arquétipo profissional dessa pessoa.
+
+REGRAS:
+- Exatamente 3 frases
+- Segunda pessoa ("Você é...", "Você funciona melhor...")
+- Tom: direto, humano, respeitoso — como um mentor que conhece a pessoa
+- Frase 1: define quem a pessoa é profissionalmente
+- Frase 2: descreve como ela naturalmente opera
+- Frase 3: conecta esse perfil ao objetivo declarado
+- NÃO mencione currículo, SPP ou qualquer produto
+- NÃO invente informações não fornecidas
+- NÃO use: "dedicado", "proativo", "dinâmico", "apaixonado"
+
+PERFIL:
+Arquétipo: ${data.archetype}
+Objetivo: ${data.objetivo}
+Como resolve problemas: ${data.resolve}
+O que motiva: ${data.motiva}
+Área: ${data.area}
+Nível: ${data.nivel}
+Trajetória: ${data.trajetoria}
+
+Responda APENAS com o parágrafo. Sem título, sem aspas.`,
+
+  fortes:(data)=>`Você é um especialista em RH e avaliação comportamental.
+
+Com base no perfil, escreva exatamente 3 pontos fortes profissionais.
+
+REGRAS:
+- Cada ponto: máximo 12 palavras
+- Baseados nas respostas — não invente
+- Específicos, não genéricos
+- Tom: "Capacidade de...", "Habilidade para...", "Facilidade em..."
+- 3 naturezas distintas: comportamental, técnica, relacional
+
+PERFIL:
+Arquétipo: ${data.archetype}
+Como resolve: ${data.resolve}
+O que motiva: ${data.motiva}
+Habilidades: ${data.habilidades}
+Trajetória: ${data.trajetoria}
+Objetivo: ${data.objetivo}
+
+Responda com os 3 pontos, um por linha, sem numeração, sem bullets.`,
+
+  desenvolver:(data)=>`Você é especialista em desenvolvimento de carreira.
+
+Com base no perfil, escreva 2 pontos de desenvolvimento.
+
+REGRAS:
+- Cada ponto: máximo 14 palavras
+- Tom construtivo — é oportunidade, não crítica
+- Baseados no gap entre perfil atual e objetivo
+- Específicos e acionáveis
+- Começar com verbo infinitivo: "Desenvolver...", "Fortalecer...", "Aprofundar..."
+
+PERFIL:
+Arquétipo: ${data.archetype}
+Objetivo: ${data.objetivo}
+Nível: ${data.nivel}
+O que trava: ${data.trava}
+Habilidades: ${data.habilidades}
+Trajetória: ${data.trajetoria}
+
+Responda com os 2 pontos, um por linha, sem numeração.`,
+
+  posicionamento:(data)=>`Você é especialista em posicionamento de carreira no mercado brasileiro.
+
+Escreva uma recomendação de posicionamento profissional.
+
+REGRAS:
+- Exatamente 2 frases
+- Prático e específico — diz O QUE fazer
+- Conecta arquétipo ao objetivo
+- Linguagem de mercado
+- NÃO seja vago. NÃO mencione currículo ou SPP.
+
+PERFIL:
+Arquétipo: ${data.archetype}
+Objetivo: ${data.objetivo}
+Área: ${data.area}
+Nível: ${data.nivel}
+Habilidades: ${data.habilidades}
+
+Responda com as 2 frases. Sem título, sem aspas.`,
+
+  sobreMim:(data)=>`Você é especialista em redação de currículos brasileiros.
+
+Escreva o "Sobre mim" para o currículo dessa pessoa.
+
+REGRAS:
+- Exatamente 3 frases
+- Primeira pessoa
+- Tom: profissional e humano
+- Frase 1: identidade e área
+- Frase 2: diferencial baseado no arquétipo e habilidades reais
+- Frase 3: objetivo profissional direto
+- USE apenas informações fornecidas
+- Se trajetória curta: foque em potencial e direção
+- NÃO use: "profissional dedicado", "busco crescimento", "apaixonado por"
+- NÃO mencione SPP
+
+PERFIL:
+Nome: ${data.nome}
+Cargo desejado: ${data.cargo}
+Arquétipo: ${data.archetype}
+Área: ${data.area}
+Nível: ${data.nivel}
+Objetivo: ${data.objetivo}
+Habilidades: ${data.habilidades}
+Trajetória: ${data.trajetoria}
+
+Responda APENAS com o parágrafo.`,
+
+  softSkills:(data)=>`Você é especialista em RH e redação de currículos.
+
+Escreva 4 soft skills para o currículo.
+
+REGRAS:
+- 3 a 6 palavras cada, substantivo + contexto
+- NUNCA palavras soltas ("Liderança", "Comunicação")
+- Sempre contextualize: "Liderança orientada a resultado"
+- Baseadas no arquétipo e respostas
+- 4 naturezas distintas
+
+PERFIL:
+Arquétipo: ${data.archetype}
+Como resolve: ${data.resolve}
+O que motiva: ${data.motiva}
+Área: ${data.area}
+Objetivo: ${data.objetivo}
+
+Responda com as 4 soft skills, uma por linha, sem numeração.`,
+};
+
+// ── CLASSIFY OPEN AREA ──
+async function classifyOpenArea(text){
+  try{
+    const res = await callClaude(`Classifique a área profissional abaixo em UMA das categorias.
+
+ÁREA: ${text}
+
+CATEGORIAS:
+- digital
+- tech
+- adm
+- saude
+- universitario
+- recem-formado
+- sem-faculdade
+- liberal
+
+Responda APENAS com o nome da categoria. Uma palavra.`);
+    const cat = res.trim().toLowerCase();
+    const valid=['digital','tech','adm','saude','universitario','recem-formado','sem-faculdade','liberal'];
+    return valid.includes(cat) ? cat : 'adm';
+  }catch(e){return 'adm';}
+}
+
+// ── CLAUDE API ──
+async function callClaude(prompt){
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:400,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text?.trim()||'';
+}
+
+// ── FALLBACKS ──
+function fallbackPerfil(archetype, nome, cargo){
+  const n = nome.split(' ')[0];
+  const map = {
+    executor:`${n}, você é um profissional orientado a resultado que transforma decisões em ação. Você funciona melhor quando tem clareza de meta e liberdade para executar no seu ritmo. Sua direção para ${cargo} é construída na consistência de entrega.`,
+    estrategista:`${n}, você é alguém que enxerga padrões e estrutura antes de agir. Você funciona melhor quando tem tempo para análise e espaço para pensar com profundidade. Como ${cargo}, seu diferencial está na qualidade das suas decisões.`,
+    construtor:`${n}, você é um profissional que prefere criar do que seguir. Você funciona melhor quando tem autonomia para construir algo do zero. Sua trajetória como ${cargo} será marcada por iniciativas que você colocou no mundo.`,
+    conector:`${n}, você é alguém que mobiliza pessoas e constrói relações com propósito. Você funciona melhor em ambientes colaborativos onde pode influenciar pelo exemplo. Como ${cargo}, seu maior ativo é como você faz as pessoas se sentirem.`,
+    especialista:`${n}, você é um profissional que aprofunda onde outros param. Você funciona melhor quando pode desenvolver domínio real em uma área. Sua posição como ${cargo} será construída na autoridade técnica que você acumula.`,
+    adaptador:`${n}, você é alguém que performa bem em ambientes que mudam. Você funciona melhor quando precisa se reinventar e encontrar caminhos alternativos. Como ${cargo}, sua versatilidade é o que te diferencia.`,
+    protagonista:`${n}, você é um profissional que quer impacto e visibilidade — e tem o que é preciso para isso. Você funciona melhor quando tem desafios à altura do que você pode entregar. Sua carreira como ${cargo} está prestes a avançar de verdade.`,
+    transformador:`${n}, você é alguém que trabalha melhor quando acredita no que está fazendo. Você funciona melhor em ambientes com propósito claro e impacto real. Como ${cargo}, você vai longe quando o trabalho tem significado.`,
+  };
+  return map[archetype]||map.executor;
+}
+
+// ── OBJECTIVE LABELS ──
+const OBJ_LABELS = {
+  reconhecido:'ser reconhecido e pago pelo que vale',
+  crescer:'crescer rápido e assumir mais responsabilidade',
+  proposito:'trabalhar com propósito e significado',
+  liberdade:'ter liberdade e autonomia profissional',
+};
+const RESOLVE_LABELS = {
+  analise:'análise profunda antes de agir',
+  acao:'ação rápida e ajuste no caminho',
+  colabo:'colaboração e construção conjunta',
+  visao:'visão ampla do cenário antes de decidir',
+};
+const MOTIVA_LABELS = {
+  meta:'metas claras e resultados mensuráveis',
+  criacao:'liberdade para criar do seu jeito',
+  desafio:'desafios difíceis e complexos',
+  crescimento:'aprendizado e evolução contínua',
+};
+const TRAVA_LABELS = {
+  'sem-retorno':'currículo não gera retorno',
+  'vagas-erradas':'aparece em vagas que não quer',
+  inseguro:'insegurança sobre como se apresentar',
+  'primeira-vez':'primeira experiência no processo',
+};
+const NIVEL_LABELS = {
+  iniciante:'iniciante (sem experiência formal)',
+  intermediario:'intermediário (em crescimento ou transição)',
+  avancado:'avançado (construindo marca profissional)',
+};
+
+// ── MAIN ──
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const raw = sessionStorage.getItem('spp_quiz');
+  if(!raw){window.location.href='index.html';return;}
+  const Q = JSON.parse(raw);
+
+  // Classify open area if needed
+  let area = Q.answers['2']||'adm';
+  if(area.startsWith('outro') && Q.openArea){
+    area = await classifyOpenArea(Q.openArea);
+  }
+
+  const archetypeKey = computeArchetype(Q);
+  const archetype = ARCHETYPES[archetypeKey];
+  const score = computeScore(archetypeKey, Q);
+  const nivel = Q.level||'intermediario';
+  const nome = Q.userData.nome||'Você';
+  const cargo = Q.userData.cargo||'Profissional';
+  const primeiroNome = nome.split(' ')[0];
+
+  // Model key
+  const modelKey = nivel==='avancado' ? null : `${nivel}-${area}`;
+  const modelName = modelKey ? (MODEL_MAP[modelKey]||MODEL_MAP[`${nivel}-adm`]) : null;
+  const price = nivel==='iniciante' ? '27' : '47';
+  const priceFrom = nivel==='iniciante' ? '49,99' : '99,99';
+
+  // Build prompt data
+  const pdata = {
+    archetype: archetype.name,
+    objetivo: OBJ_LABELS[Q.answers['3']]||'crescimento profissional',
+    resolve: RESOLVE_LABELS[Q.answers['4']]||'análise e execução',
+    motiva: MOTIVA_LABELS[Q.answers['5']]||'desafios e resultados',
+    trava: TRAVA_LABELS[Q.answers['6']]||'posicionamento',
+    area, nivel: NIVEL_LABELS[nivel],
+    habilidades: (Q.answers['7']||[]).join(', ')||'não especificadas',
+    trajetoria: Q.answers['8']||'não informada',
+    nome, cargo,
+  };
+
+  // Call Claude API in parallel for all sections
+  let perfil='', fortes=[], desenvolver=[], posicionamento='', sobreMim='', softSkills=[];
+
+  try{
+    const [p,f,d,pos,sm,ss] = await Promise.all([
+      callClaude(PROMPTS.perfil(pdata)),
+      callClaude(PROMPTS.fortes(pdata)),
+      callClaude(PROMPTS.desenvolver(pdata)),
+      callClaude(PROMPTS.posicionamento(pdata)),
+      callClaude(PROMPTS.sobreMim(pdata)),
+      callClaude(PROMPTS.softSkills(pdata)),
+    ]);
+    perfil = p||fallbackPerfil(archetypeKey,nome,cargo);
+    fortes = f.split('\n').filter(Boolean).slice(0,3);
+    desenvolver = d.split('\n').filter(Boolean).slice(0,2);
+    posicionamento = pos;
+    sobreMim = sm;
+    softSkills = ss.split('\n').filter(Boolean).slice(0,4);
+  }catch(e){
+    perfil = fallbackPerfil(archetypeKey,nome,cargo);
+    fortes = ['Capacidade analítica aplicada ao contexto real','Habilidade de execução orientada a resultado','Facilidade em comunicar valor de forma clara'];
+    desenvolver = ['Fortalecer presença estratégica na área de interesse','Aprofundar competências técnicas alinhadas ao objetivo'];
+    posicionamento = 'Posicione-se com clareza no que você entrega, não apenas no que você faz. Comunique resultados concretos e o impacto que gera.';
+    sobreMim = `${primeiroNome} é um profissional com foco em ${cargo}, buscando ${OBJ_LABELS[Q.answers['3']]||'crescimento'}. Combina ${RESOLVE_LABELS[Q.answers['4']]||'análise e execução'} com motivação em ${MOTIVA_LABELS[Q.answers['5']]||'desafios reais'}. Busca oportunidades que potencializem seu impacto e reconheçam sua capacidade de entrega.`;
+    softSkills = ['Execução orientada a resultado','Comunicação clara sob pressão','Adaptabilidade em novos contextos','Aprendizado contínuo e autogestão'];
+  }
+
+  // Hide loading, show result
+  document.getElementById('loading').style.display='none';
+  document.getElementById('result-page').style.display='block';
+
+  if(nivel==='avancado'){
+    renderAdvanced(primeiroNome, archetype, score, perfil, fortes, desenvolver, posicionamento, pdata);
+  } else {
+    renderStandard(primeiroNome, cargo, Q.userData, archetype, score, perfil, fortes, desenvolver, posicionamento, sobreMim, softSkills, pdata, modelName, price, priceFrom, nivel);
+  }
+
+  // Animate score bar
+  setTimeout(()=>{
+    const fill = document.getElementById('score-fill');
+    if(fill) fill.style.width = score+'%';
+  },300);
+});
+
+function renderStandard(nome, cargo, userData, archetype, score, perfil, fortes, desenvolver, posicionamento, sobreMim, softSkills, pdata, modelName, price, priceFrom, nivel){
+  const html = `
+  <section class="result-hero">
+    <div class="result-badge">✦ Análise SPP concluída</div>
+    <h1 class="result-name">${nome},<br>seu perfil é <em>${archetype.name}.</em></h1>
+    <p class="archetype-phrase">${archetype.phrase}</p>
+    <div class="score-wrap">
+      <div class="score-row">
+        <span class="score-label">Score de posicionamento</span>
+        <span class="score-num">${score}/100</span>
+      </div>
+      <div class="score-track"><div class="score-fill" id="score-fill"></div></div>
+    </div>
+    <p style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.8;max-width:580px;margin:0 auto;">${perfil}</p>
+  </section>
+
+  <section class="analysis">
+    <div class="a-inner">
+      <p style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber);">Sua análise completa</p>
+      <h2 style="font-size:clamp(22px,3.5vw,36px);font-weight:800;color:#fff;margin-top:10px;letter-spacing:-0.5px;">O que o Método SPP<br>identificou sobre você.</h2>
+      <div class="a-grid">
+        <div class="a-card">
+          <div class="a-card-title" style="color:#4CAF80;">✅ Seus pontos fortes</div>
+          ${fortes.map(f=>`<div class="a-item"><div class="a-dot" style="background:#4CAF80;margin-top:8px;"></div>${f}</div>`).join('')}
+        </div>
+        <div class="a-card">
+          <div class="a-card-title" style="color:var(--amber);">📈 O que desenvolver</div>
+          ${desenvolver.map(d=>`<div class="a-item"><div class="a-dot" style="background:var(--amber);margin-top:8px;"></div>${d}</div>`).join('')}
+        </div>
+        <div class="a-card">
+          <div class="a-card-title" style="color:#7EB8FF;">🎯 Como se posicionar</div>
+          <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.7;">${posicionamento}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="skills-section">
+    <div class="sk-inner">
+      <p style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px;">Hard skills identificadas</p>
+      <div class="sk-tags">
+        ${(pdata.habilidades!=='não especificadas'?pdata.habilidades.split(', '):['Habilidades a definir']).map(s=>`<span class="sk-tag">${s}</span>`).join('')}
+      </div>
+      <p class="sk-title">Competências comportamentais</p>
+      <div class="sk-tags">
+        ${softSkills.map(s=>`<span class="sk-tag" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);">${s}</span>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <section class="transition-block">
+    <div class="tb-inner">
+      <p class="tb-eyebrow">Seu currículo SPP</p>
+      <h2 class="tb-title">Com base na sua análise,<br>seu currículo já foi construído.</h2>
+      <p class="tb-sub">O sistema preparou um currículo que comunica exatamente quem você é — com a linguagem certa, as habilidades certas e o posicionamento certo para a vaga que você quer. Modelo: <strong style="color:rgba(255,255,255,0.8);">${modelName}</strong>.</p>
+    </div>
+  </section>
+
+  <section class="cv-preview">
+    <div class="cv-inner">
+      <div class="cv-device">
+        <div class="cv-bar">
+          <div class="cv-dot" style="background:#FF5F57;"></div>
+          <div class="cv-dot" style="background:#FEBC2E;"></div>
+          <div class="cv-dot" style="background:#28C840;"></div>
+          <span class="cv-fn">curriculo_${nome.toLowerCase()}_spp.pdf</span>
+        </div>
+        <div class="cv-body">
+          <div class="cv-name">${userData.nome||nome}</div>
+          <div class="cv-role">${cargo}</div>
+          <div class="cv-contact">
+            <span class="cv-ci">📍 ${userData.cidade||'Sua cidade'}</span>
+            <span class="cv-ci">✉ ${userData.email||'seuemail@exemplo.com'}</span>
+            <span class="cv-ci">📱 ${userData.whats||'(11) 00000-0000'}</span>
+          </div>
+          <div class="cv-line"></div>
+          <div class="cv-st">Sobre mim</div>
+          <div class="cv-summary">${sobreMim}</div>
+          <div class="cv-blur-wrap">
+            <div class="cv-blur">
+              <div class="cv-st">Habilidades Técnicas</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;">
+                ${[1,2,3,4].map(()=>`<div style="height:24px;width:72px;background:#E6E4DC;border-radius:100px;"></div>`).join('')}
+              </div>
+              <div class="cv-st">Experiência Profissional</div>
+              <div class="cv-bl" style="width:78%;"></div>
+              <div class="cv-bl" style="width:90%;"></div>
+              <div class="cv-bl" style="width:55%;margin-bottom:16px;"></div>
+              <div class="cv-st">Formação</div>
+              <div class="cv-bl" style="width:70%;"></div>
+              <div class="cv-bl" style="width:50%;"></div>
+            </div>
+            <div class="cv-lock">
+              <div class="cv-li">🔒</div>
+              <div class="cv-lt">Currículo completo bloqueado</div>
+              <div class="cv-ls">Habilidades, experiência e formação prontos para usar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="price-section">
+    <div class="price-inner">
+      <div class="price-card">
+        <div class="price-includes">
+          <div class="pi-item"><span class="pi-check">✓</span>Currículo ${modelName}</div>
+          <div class="pi-item"><span class="pi-check">✓</span>PDF para enviar</div>
+          <div class="pi-item"><span class="pi-check">✓</span>Word editável</div>
+          <div class="pi-item"><span class="pi-check">✓</span>ATS-friendly</div>
+          <div class="pi-item"><span class="pi-check">✓</span>Entrega imediata</div>
+          <div class="pi-item"><span class="pi-check">✓</span>Garantia 7 dias</div>
+        </div>
+        <div class="price-from">de R$ ${priceFrom}</div>
+        <div class="price-main"><sup>R$</sup>${price}</div>
+        <p class="price-note">Pagamento único · Acesso imediato na área de membros<br>e enviado ao seu e-mail</p>
+        <button class="btn-buy" onclick="alert('Configurar link Hubla aqui')">
+          Desbloquear meu currículo agora →
+        </button>
+        <div class="price-trust">
+          <span>🔒 Pagamento seguro</span>
+          <span>↩ 7 dias de garantia</span>
+          <span>⚡ Acesso na hora</span>
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  document.getElementById('result-content').innerHTML = html;
+}
+
+function renderAdvanced(nome, archetype, score, perfil, fortes, desenvolver, posicionamento, pdata){
+  const html = `
+  <section class="result-hero">
+    <div class="result-badge">✦ Perfil Avançado identificado</div>
+    <h1 class="result-name">Parabéns, <em>${nome}.</em></h1>
+    <p class="archetype-phrase">${archetype.phrase}</p>
+    <div class="score-wrap">
+      <div class="score-row">
+        <span class="score-label">Score de posicionamento</span>
+        <span class="score-num">${score}/100</span>
+      </div>
+      <div class="score-track"><div class="score-fill" id="score-fill"></div></div>
+    </div>
+    <p style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.8;max-width:580px;margin:0 auto;">${perfil}</p>
+  </section>
+
+  <section class="analysis">
+    <div class="a-inner">
+      <p style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber);">Sua análise completa</p>
+      <h2 style="font-size:clamp(22px,3.5vw,36px);font-weight:800;color:#fff;margin-top:10px;letter-spacing:-0.5px;">O Método SPP identificou<br>exatamente quem você é.</h2>
+      <div class="a-grid">
+        <div class="a-card"><div class="a-card-title" style="color:#4CAF80;">✅ Seus pontos fortes</div>${fortes.map(f=>`<div class="a-item"><div class="a-dot" style="background:#4CAF80;margin-top:8px;"></div>${f}</div>`).join('')}</div>
+        <div class="a-card"><div class="a-card-title" style="color:var(--amber);">📈 O que desenvolver</div>${desenvolver.map(d=>`<div class="a-item"><div class="a-dot" style="background:var(--amber);margin-top:8px;"></div>${d}</div>`).join('')}</div>
+        <div class="a-card"><div class="a-card-title" style="color:#7EB8FF;">🎯 Como se posicionar</div><p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.7;">${posicionamento}</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="price-section" style="padding-top:0;">
+    <div class="price-inner">
+      <div class="advanced-block">
+        <div class="adv-badge">✦ Nível Avançado</div>
+        <h3 class="adv-title">Para o seu nível,<br>o currículo não é o foco.</h3>
+        <p class="adv-text">A sua próxima alavanca é como você é <strong style="color:#fff;">percebido nas redes</strong> — posicionamento, autoridade e atração de oportunidades. Estamos desenvolvendo a <strong style="color:#fff;">Análise de Posicionamento SPP</strong> para profissionais exatamente como você.</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.35);font-weight:600;margin-bottom:12px;">Entre na lista de espera e seja o primeiro:</p>
+        <div class="adv-form">
+          <input id="wl-email" class="adv-input" type="email" placeholder="Seu melhor e-mail">
+          <button class="btn-adv" onclick="joinWaitlist()">Quero entrar</button>
+        </div>
+        <p class="adv-cv-link">Prefere o currículo agora? <a onclick="showAdvancedCv()">Clique aqui — R$47</a></p>
+      </div>
+    </div>
+  </section>`;
+  document.getElementById('result-content').innerHTML = html;
+}
+
+function joinWaitlist(){
+  const email = document.getElementById('wl-email')?.value;
+  if(!email) return;
+  alert('Você entrou na lista de espera! Em breve entraremos em contato. 🎉');
+}
+
+function showAdvancedCv(){
+  // Fallback to standard intermediario flow
+  const raw = sessionStorage.getItem('spp_quiz');
+  if(raw){
+    const Q = JSON.parse(raw);
+    Q.level = 'intermediario';
+    sessionStorage.setItem('spp_quiz', JSON.stringify(Q));
+    window.location.reload();
+  }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // /api/process.js
-// Cérebro do SPP: recebe o quiz, calcula score/arquetipo no servidor, chama Claude 1x e devolve JSON.
-// Tudo que é "segredo" fica aqui (não no DevTools).
+// Backend-first: recebe quiz, decide funil/nível, calcula arquétipo/score, chama Claude 1x,
+// salva no Supabase e devolve JSON pronto pro frontend.
 
 function clampText(s, max = 900) {
   if (!s) return "";
@@ -105,6 +105,22 @@ function computeScore(archetypeKey, Q) {
   return Math.min(base + bonus, 97);
 }
 
+function normalizeNivel(raw) {
+  const n = String(raw || "intermediario").toLowerCase().trim();
+  if (n === "iniciante" || n === "intermediario" || n === "avancado") return n;
+  return "intermediario";
+}
+
+function computeFunil(nivel) {
+  return (nivel === "avancado") ? "avancado" : "padrao";
+}
+
+function computePricing(nivel) {
+  // Você pode ajustar aqui depois sem tocar no front.
+  if (nivel === "iniciante") return { price: "27", priceFrom: "49,99" };
+  return { price: "47", priceFrom: "99,99" };
+}
+
 async function callClaudeServer({ apiKey, prompt, model, max_tokens }) {
   const payload = {
     model: model || "claude-3-5-sonnet-latest",
@@ -129,12 +145,10 @@ async function callClaudeServer({ apiKey, prompt, model, max_tokens }) {
     throw err;
   }
 
-  const text = (data.content || [])
+  return (data.content || [])
     .map((b) => (b.type === "text" ? b.text : ""))
     .join("")
     .trim();
-
-  return text;
 }
 
 // Supabase (server only)
@@ -189,6 +203,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok:false, error:"Envie { quiz: {...} }" });
     }
 
+    // Nível/funil é decisão de backend
+    const Q = quiz;
+    const nivel = normalizeNivel(Q.level);
+    const funil = computeFunil(nivel);
+    const next_step = (funil === "avancado") ? "FUNIL_AVANCADO" : "RESULTADO_PADRAO";
+    const pricing = computePricing(nivel);
+
     // ===== CACHE (se já existe resultado salvo) =====
     if (lead_id) {
       const existing = await supabaseGetLeadById(lead_id);
@@ -196,46 +217,37 @@ export default async function handler(req, res) {
         return res.status(200).json({
           ok: true,
           lead_id: existing.id,
+          nivel: existing.nivel || nivel,
+          funil: existing.funil || funil,
+          next_step,
+          price: pricing.price,
+          priceFrom: pricing.priceFrom,
           primeiroNome: (existing.nome || "Você").split(" ")[0],
           cargo: existing.cargo_alvo || "Profissional",
-          nivel: quiz?.level || "intermediario",
-          modelName: null,
-          price: (quiz?.level === "iniciante") ? "27" : "47",
-          priceFrom: (quiz?.level === "iniciante") ? "49,99" : "99,99",
           archetype: {
-            key: existing.archetype_key,
-            name: existing.archetype_name,
+            key: existing.archetype_key || null,
+            name: existing.archetype_name || null,
             phrase: ""
           },
           score: existing.score,
-          pdata: {
-            nome: existing.nome,
-            cargo: existing.cargo_alvo,
-            nivel: quiz?.level || "intermediario",
-            area: null
-          },
           ai: existing.ai_preview,
         });
       }
     }
 
-    const Q = quiz;
-    const nivel = Q.level || "intermediario";
-
+    // Lead data
     const nomeFull = Q?.userData?.nome || "Você";
     const cargoAlvo = Q?.userData?.cargo || "Profissional";
     const primeiroNome = String(nomeFull).split(" ")[0] || "Você";
 
-    // Area (só pra enriquecer texto; não é coluna "core")
+    // Área só pra enriquecer IA (não precisa salvar como core)
     let area = Q?.answers?.["2"] || "adm";
     if (String(area).startsWith("outro")) area = classifyArea(Q.openArea || "");
 
+    // Resultado determinístico
     const archetypeKey = computeArchetype(Q);
     const archetype = ARCHETYPES[archetypeKey];
     const score = computeScore(archetypeKey, Q);
-
-    const price = nivel === "iniciante" ? "27" : "47";
-    const priceFrom = nivel === "iniciante" ? "49,99" : "99,99";
 
     const pdata = {
       archetype: archetype.name,
@@ -251,6 +263,8 @@ export default async function handler(req, res) {
       cargo: cargoAlvo,
     };
 
+    // Se avançado: você pode trocar prompt/modelo aqui, ou até nem gerar currículo e mandar pra outro funil.
+    // Por enquanto, mantém o preview (o front decide o funil com base no next_step).
     const prompt = `
 Você é especialista em avaliação comportamental e posicionamento de carreira.
 Gere APENAS JSON válido, sem markdown.
@@ -289,7 +303,7 @@ Cargo alvo: ${pdata.cargo}
       apiKey,
       prompt,
       model: "claude-3-5-sonnet-latest",
-      max_tokens: 900,
+      max_tokens: 900, // custo controlado
     });
 
     let ai;
@@ -304,20 +318,27 @@ Cargo alvo: ${pdata.cargo}
       softSkills: ["Comunicação","Organização","Resiliência","Pensamento crítico"],
     };
 
-    // ===== SALVA LEAD REAL + RESULTADO (tabela simples) =====
+    // ===== SALVA LEAD + ESTADO DO PRODUTO =====
     const leadPayload = {
+      // Lead
       nome: Q?.userData?.nome || null,
       email: Q?.userData?.email || null,
       whatsapp: Q?.userData?.whatsapp || Q?.userData?.telefone || null,
       cidade_uf: Q?.userData?.cidadeUF || Q?.userData?.cidade_uf || Q?.userData?.cidade || null,
       cargo_alvo: Q?.userData?.cargo || null,
 
+      // Classificação / funil
+      nivel,
+      funil,
+
+      // Resultado
       archetype_key: archetypeKey,
       archetype_name: archetype.name,
       score,
       quiz: Q,
       ai_preview: safe,
 
+      // Pagamento
       paid: false,
       paid_at: null,
       payment_provider: null,
@@ -329,15 +350,19 @@ Cargo alvo: ${pdata.cargo}
     return res.status(200).json({
       ok: true,
       lead_id: leadRow?.id || null,
+
+      nivel,
+      funil,
+      next_step,
+
+      price: pricing.price,
+      priceFrom: pricing.priceFrom,
+
       primeiroNome,
       cargo: cargoAlvo,
-      nivel,
-      modelName: null,
-      price,
-      priceFrom,
+
       archetype: { key: archetypeKey, name: archetype.name, phrase: archetype.phrase },
       score,
-      pdata,
       ai: safe,
     });
 

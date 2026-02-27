@@ -10,7 +10,7 @@ function clampText(s, max = 900) {
 
 function classifyArea(openText) {
   const t = (openText || "").toLowerCase();
-  const has = (...words) => words.some(w => t.includes(w));
+  const has = (...words) => words.some((w) => t.includes(w));
 
   if (has("dev","desenvolvedor","program","software","frontend","backend","dados","data","engenheiro","ti","cloud","ia")) return "tech";
   if (has("marketing","tráfego","trafego","social media","copy","conteúdo","conteudo","branding","seo")) return "digital";
@@ -33,18 +33,6 @@ const ARCHETYPES = {
   adaptador:{ name:"O Adaptador", phrase:'"Incerteza é onde você performa melhor."', baseScore:72 },
   protagonista:{ name:"O Protagonista", phrase:'"Você não nasceu para ficar em segundo plano."', baseScore:77 },
   transformador:{ name:"O Transformador", phrase:'"Você trabalha melhor quando acredita no que está fazendo."', baseScore:74 },
-};
-
-const MODEL_MAP = {
-  "iniciante-universitario":"Modelo Universitário SPP",
-  "iniciante-recem-formado":"Modelo Recém-Formado SPP",
-  "iniciante-sem-faculdade":"Modelo Entrada de Mercado SPP",
-  "iniciante-outro-i":"Modelo Universitário SPP",
-  "intermediario-digital":"Modelo Migração Digital SPP",
-  "intermediario-tech":"Modelo Tech & Dados SPP",
-  "intermediario-adm":"Modelo Corporativo Pro SPP",
-  "intermediario-saude":"Modelo Saúde Profissional SPP",
-  "intermediario-outro-m":"Modelo Corporativo Pro SPP",
 };
 
 const NIVEL_LABELS = {
@@ -81,36 +69,39 @@ const TRAVA_LABELS = {
   "primeira-vez":"primeira experiência no processo",
 };
 
-function computeArchetype(Q){
-  const scores = {executor:0,estrategista:0,construtor:0,conector:0,especialista:0,adaptador:0,protagonista:0,transformador:0};
+function computeArchetype(Q) {
+  const scores = {
+    executor:0, estrategista:0, construtor:0, conector:0,
+    especialista:0, adaptador:0, protagonista:0, transformador:0
+  };
 
   const obj = Q?.answers?.["3"];
-  if(obj==="reconhecido") {scores.executor+=2; scores.protagonista+=2;}
-  if(obj==="crescer") {scores.protagonista+=2; scores.executor+=1; scores.construtor+=1;}
-  if(obj==="proposito") {scores.transformador+=3; scores.conector+=1;}
-  if(obj==="liberdade") {scores.construtor+=3; scores.adaptador+=1;}
+  if (obj==="reconhecido") {scores.executor+=2; scores.protagonista+=2;}
+  if (obj==="crescer") {scores.protagonista+=2; scores.executor+=1; scores.construtor+=1;}
+  if (obj==="proposito") {scores.transformador+=3; scores.conector+=1;}
+  if (obj==="liberdade") {scores.construtor+=3; scores.adaptador+=1;}
 
   const res = Q?.answers?.["4"];
-  if(res==="analise") {scores.estrategista+=3; scores.especialista+=2;}
-  if(res==="acao") {scores.executor+=3; scores.adaptador+=1;}
-  if(res==="colabo") {scores.conector+=3; scores.transformador+=1;}
-  if(res==="visao") {scores.estrategista+=2; scores.construtor+=2;}
+  if (res==="analise") {scores.estrategista+=3; scores.especialista+=2;}
+  if (res==="acao") {scores.executor+=3; scores.adaptador+=1;}
+  if (res==="colabo") {scores.conector+=3; scores.transformador+=1;}
+  if (res==="visao") {scores.estrategista+=2; scores.construtor+=2;}
 
   const mot = Q?.answers?.["5"];
-  if(mot==="meta") {scores.executor+=2; scores.especialista+=1;}
-  if(mot==="criacao") {scores.construtor+=2; scores.protagonista+=1;}
-  if(mot==="desafio") {scores.especialista+=2; scores.executor+=1;}
-  if(mot==="crescimento") {scores.adaptador+=2; scores.transformador+=1;}
+  if (mot==="meta") {scores.executor+=2; scores.especialista+=1;}
+  if (mot==="criacao") {scores.construtor+=2; scores.protagonista+=1;}
+  if (mot==="desafio") {scores.especialista+=2; scores.executor+=1;}
+  if (mot==="crescimento") {scores.adaptador+=2; scores.transformador+=1;}
 
   return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
 }
 
-function computeScore(archetypeKey, Q){
+function computeScore(archetypeKey, Q) {
   const base = ARCHETYPES[archetypeKey]?.baseScore ?? 75;
   let bonus = 0;
-  if(Array.isArray(Q?.answers?.["7"]) && Q.answers["7"].length >= 2) bonus += 4;
-  if((Q?.answers?.["8"] || "").length > 80) bonus += 3;
-  if(Q?.level === "intermediario") bonus += 2;
+  if (Array.isArray(Q?.answers?.["7"]) && Q.answers["7"].length >= 2) bonus += 4;
+  if ((Q?.answers?.["8"] || "").length > 80) bonus += 3;
+  if (Q?.level === "intermediario") bonus += 2;
   return Math.min(base + bonus, 97);
 }
 
@@ -146,7 +137,7 @@ async function callClaudeServer({ apiKey, prompt, model, max_tokens }) {
   return text;
 }
 
-// Supabase opcional (se configurado no Vercel)
+// Supabase (server only)
 async function supabaseInsertLead(payload) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -168,7 +159,6 @@ async function supabaseInsertLead(payload) {
   return data?.[0] || null;
 }
 
-// Auxiliar Supabase
 async function supabaseGetLeadById(id) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -199,51 +189,50 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok:false, error:"Envie { quiz: {...} }" });
     }
 
-    // ===== CACHE =====
-if (lead_id) {
-  const existing = await supabaseGetLeadById(lead_id);
-  if (existing?.ai && existing?.score && existing?.archetype_name) {
-    return res.status(200).json({
-      ok: true,
-      lead_id: existing.id,
-      primeiroNome: (existing.nome || "Você").split(" ")[0],
-      cargo: existing.cargo || "Profissional",
-      nivel: existing.nivel || "intermediario",
-      modelName: null,
-      price: (existing.nivel === "iniciante") ? "27" : "47",
-      priceFrom: (existing.nivel === "iniciante") ? "49,99" : "99,99",
-      archetype: { 
-        key: existing.archetype_key, 
-        name: existing.archetype_name, 
-        phrase: "" 
-      },
-      score: existing.score,
-      pdata: {
-        nome: existing.nome,
-        cargo: existing.cargo,
-        nivel: existing.nivel,
-        area: existing.area
-      },
-      ai: existing.ai,
-    });
-  }
-}
-    
+    // ===== CACHE (se já existe resultado salvo) =====
+    if (lead_id) {
+      const existing = await supabaseGetLeadById(lead_id);
+      if (existing?.ai_preview && existing?.score && existing?.archetype_name) {
+        return res.status(200).json({
+          ok: true,
+          lead_id: existing.id,
+          primeiroNome: (existing.nome || "Você").split(" ")[0],
+          cargo: existing.cargo_alvo || "Profissional",
+          nivel: quiz?.level || "intermediario",
+          modelName: null,
+          price: (quiz?.level === "iniciante") ? "27" : "47",
+          priceFrom: (quiz?.level === "iniciante") ? "49,99" : "99,99",
+          archetype: {
+            key: existing.archetype_key,
+            name: existing.archetype_name,
+            phrase: ""
+          },
+          score: existing.score,
+          pdata: {
+            nome: existing.nome,
+            cargo: existing.cargo_alvo,
+            nivel: quiz?.level || "intermediario",
+            area: null
+          },
+          ai: existing.ai_preview,
+        });
+      }
+    }
+
     const Q = quiz;
     const nivel = Q.level || "intermediario";
+
     const nomeFull = Q?.userData?.nome || "Você";
-    const cargo = Q?.userData?.cargo || "Profissional";
+    const cargoAlvo = Q?.userData?.cargo || "Profissional";
     const primeiroNome = String(nomeFull).split(" ")[0] || "Você";
 
+    // Area (só pra enriquecer texto; não é coluna "core")
     let area = Q?.answers?.["2"] || "adm";
     if (String(area).startsWith("outro")) area = classifyArea(Q.openArea || "");
 
     const archetypeKey = computeArchetype(Q);
     const archetype = ARCHETYPES[archetypeKey];
     const score = computeScore(archetypeKey, Q);
-
-    const modelKey = `${nivel}-${area}`;
-    const modelName = MODEL_MAP[modelKey] || MODEL_MAP[`${nivel}-adm`] || null;
 
     const price = nivel === "iniciante" ? "27" : "47";
     const priceFrom = nivel === "iniciante" ? "49,99" : "99,99";
@@ -259,7 +248,7 @@ if (lead_id) {
       habilidades: (Array.isArray(Q?.answers?.["7"]) ? Q.answers["7"].join(", ") : "") || "não especificadas",
       trajetoria: clampText(Q?.answers?.["8"] || "não informada", 900),
       nome: nomeFull,
-      cargo,
+      cargo: cargoAlvo,
     };
 
     const prompt = `
@@ -300,42 +289,50 @@ Cargo alvo: ${pdata.cargo}
       apiKey,
       prompt,
       model: "claude-3-5-sonnet-latest",
-      max_tokens: 900, // controle de custo
+      max_tokens: 900,
     });
 
     let ai;
     try { ai = JSON.parse(raw); } catch { ai = null; }
 
-    const safe = ai && typeof ai === "object" ? ai : {
+    const safe = (ai && typeof ai === "object") ? ai : {
       perfil: `${primeiroNome}, seu perfil aponta para execução com direção e consistência. Você opera melhor com clareza de objetivo e ação contínua. Agora o foco é traduzir isso em posicionamento e resultado.`,
       fortes: ["Clareza de objetivo", "Ação consistente", "Comunicação objetiva"],
       desenvolver: ["Narrativa profissional", "Provas e resultados"],
       posicionamento: "Defina o que você entrega (resultado), para quem (contexto) e como (método).",
-      sobreMim: `${primeiroNome} é um(a) profissional focado(a) em ${cargo}, buscando crescimento e clareza de posicionamento.`,
+      sobreMim: `${primeiroNome} é um(a) profissional focado(a) em ${cargoAlvo}, buscando crescimento e clareza de posicionamento.`,
       softSkills: ["Comunicação","Organização","Resiliência","Pensamento crítico"],
     };
 
-    const leadRow = await supabaseInsertLead({
-      nome: pdata.nome,
-      cargo: pdata.cargo,
-      nivel,
-      area,
+    // ===== SALVA LEAD REAL + RESULTADO (tabela simples) =====
+    const leadPayload = {
+      nome: Q?.userData?.nome || null,
+      email: Q?.userData?.email || null,
+      whatsapp: Q?.userData?.whatsapp || Q?.userData?.telefone || null,
+      cidade_uf: Q?.userData?.cidadeUF || Q?.userData?.cidade_uf || Q?.userData?.cidade || null,
+      cargo_alvo: Q?.userData?.cargo || null,
+
       archetype_key: archetypeKey,
       archetype_name: archetype.name,
       score,
       quiz: Q,
-      ai: safe,
+      ai_preview: safe,
+
       paid: false,
-      created_at: new Date().toISOString(),
-    });
+      paid_at: null,
+      payment_provider: null,
+      payment_ref: null,
+    };
+
+    const leadRow = await supabaseInsertLead(leadPayload);
 
     return res.status(200).json({
       ok: true,
       lead_id: leadRow?.id || null,
       primeiroNome,
-      cargo,
+      cargo: cargoAlvo,
       nivel,
-      modelName,
+      modelName: null,
       price,
       priceFrom,
       archetype: { key: archetypeKey, name: archetype.name, phrase: archetype.phrase },
@@ -346,6 +343,10 @@ Cargo alvo: ${pdata.cargo}
 
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ ok:false, error:"Falha no /api/process", details: e?.details || String(e) });
+    return res.status(500).json({
+      ok:false,
+      error:"Falha no /api/process",
+      details: e?.details || String(e)
+    });
   }
 }

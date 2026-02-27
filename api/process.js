@@ -168,6 +168,24 @@ async function supabaseInsertLead(payload) {
   return data?.[0] || null;
 }
 
+// Auxiliar Supabase
+async function supabaseGetLeadById(id) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+
+  const r = await fetch(`${url}/rest/v1/leads?id=eq.${id}&select=*`, {
+    headers: {
+      "apikey": key,
+      "authorization": `Bearer ${key}`,
+    },
+  });
+
+  const data = await r.json();
+  if (!r.ok) return null;
+  return data?.[0] || null;
+}
+
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ ok:false, error:"Use POST" });
@@ -176,11 +194,41 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ ok:false, error:"ANTHROPIC_API_KEY não configurada no Vercel" });
 
   try {
-    const { quiz } = req.body || {};
+    const { quiz, lead_id } = req.body || {};
     if (!quiz || typeof quiz !== "object") {
       return res.status(400).json({ ok:false, error:"Envie { quiz: {...} }" });
     }
 
+    // ===== CACHE =====
+if (lead_id) {
+  const existing = await supabaseGetLeadById(lead_id);
+  if (existing?.ai && existing?.score && existing?.archetype_name) {
+    return res.status(200).json({
+      ok: true,
+      lead_id: existing.id,
+      primeiroNome: (existing.nome || "Você").split(" ")[0],
+      cargo: existing.cargo || "Profissional",
+      nivel: existing.nivel || "intermediario",
+      modelName: null,
+      price: (existing.nivel === "iniciante") ? "27" : "47",
+      priceFrom: (existing.nivel === "iniciante") ? "49,99" : "99,99",
+      archetype: { 
+        key: existing.archetype_key, 
+        name: existing.archetype_name, 
+        phrase: "" 
+      },
+      score: existing.score,
+      pdata: {
+        nome: existing.nome,
+        cargo: existing.cargo,
+        nivel: existing.nivel,
+        area: existing.area
+      },
+      ai: existing.ai,
+    });
+  }
+}
+    
     const Q = quiz;
     const nivel = Q.level || "intermediario";
     const nomeFull = Q?.userData?.nome || "Você";

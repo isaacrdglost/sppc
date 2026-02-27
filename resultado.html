@@ -217,16 +217,30 @@ nav{
 <script>
 // ── MAIN (BACKEND-FIRST) ──
 async function processQuiz(quiz){
+
+  const leadId = sessionStorage.getItem('spp_lead_id');
+
   const r = await fetch('/api/process', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ quiz })
+    body: JSON.stringify(
+      leadId
+        ? { quiz: quiz, lead_id: leadId }
+        : { quiz: quiz }
+    )
   });
-  const data = await r.json().catch(()=> ({}));
-  if(!r.ok || !data.ok){
+
+  const data = await r.json().catch(()=>({}));
+
+  if (!r.ok || !data.ok) {
     console.error('Falha em /api/process:', data);
     throw new Error(data?.error || 'Falha em /api/process');
   }
+
+  if (data.lead_id) {
+    sessionStorage.setItem('spp_lead_id', String(data.lead_id));
+  }
+
   return data;
 }
 

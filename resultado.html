@@ -245,7 +245,7 @@ async function processQuiz(quiz){
 }
 
 window.addEventListener('DOMContentLoaded', async ()=>{
-  const raw = sessionStorage.getItem('spp_quiz');
+  const raw = localStorage.getItem('spp_quiz');
   if(!raw){ window.location.href='index.html'; return; }
 
   let Q;

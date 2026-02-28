@@ -1017,7 +1017,7 @@ async function submitQuiz(){
   };
   showGenerating();
   // Save to sessionStorage for result page
-  sessionStorage.setItem('spp_quiz', JSON.stringify(Q));
+  localStorage.setItem('spp_quiz', JSON.stringify(Q));
   console.log("SALVO spp_quiz:", sessionStorage.getItem('spp_quiz'));
   // Animate then redirect
   setTimeout(()=>{ window.location.href='resultado.html'; }, 4000);

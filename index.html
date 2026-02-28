@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --amber:#E8870A;--amber-h:#C97208;--amber-light:#FFF3E0;--amber-glow:rgba(232,135,10,0.12);
+  --amber:#E8870A;--amber-h:#C97208;--amber-light:#FFF3E0;--amber-glow:rgba(232,135,10,0.20);
   --ink:#0D0C0B;--ink2:#1E1D1C;--ink3:#2E2D2B;
   --cream:#F9F8F4;--off:#F2F1EC;--white:#FFFFFF;
   --muted:#8C8A82;--border:#E6E4DC;
@@ -1017,11 +1017,10 @@ async function submitQuiz(){
   };
   showGenerating();
   // Save to sessionStorage for result page
-  sessionStorage.setItem('spp_quiz',JSON.stringify(Q));
+  sessionStorage.setItem('spp_quiz', JSON.stringify(Q));
+  console.log("SALVO spp_quiz:", sessionStorage.getItem('spp_quiz'));
   // Animate then redirect
-  setTimeout(()=>{
-    window.location.href='resultado.html';
-  },4000);
+  setTimeout(()=>{ window.location.href='resultado.html'; }, 4000);
 }
 
 function showGenerating(){

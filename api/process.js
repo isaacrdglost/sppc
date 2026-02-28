@@ -123,7 +123,7 @@ function computePricing(nivel) {
 
 async function callClaudeServer({ apiKey, prompt, model, max_tokens }) {
   const payload = {
-    model: model || "claude-3-5-sonnet-latest",
+    model: "claude-sonnet-4-6-sonnet-latest",
     max_tokens: Number.isFinite(max_tokens) ? max_tokens : 900,
     messages: [{ role: "user", content: prompt }],
   };
